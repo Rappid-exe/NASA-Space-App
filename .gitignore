@@ -1,0 +1,84 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+*.egg-info/
+dist/
+build/
+
+# Data files (too large for git)
+*.csv
+*.h5
+*.hdf5
+data/raw/
+data/processed/
+cumulative_*.csv
+
+# Models (too large for git)
+models/registry/
+*.pkl
+*.h5
+*.joblib
+*.pth
+
+# Node
+node_modules/
+.next/
+out/
+build/
+dist/
+.turbo
+
+# Environment
+.env
+.env.local
+.env.*.local
+frontend/.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+*.sublime-*
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+coverage/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# TensorFlow
+*.ckpt
+*.index
+*.meta
+checkpoint
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~

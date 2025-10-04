@@ -48,6 +48,7 @@ frontend/.env.local
 *.swo
 .DS_Store
 *.sublime-*
+.kiro/
 
 # Logs
 *.log

@@ -59,3 +59,69 @@ export interface ModelInfo {
   accuracy: number;
   training_date: string;
 }
+
+export interface FeatureImportance {
+  algorithm: string;
+  features: Array<{
+    name: string;
+    importance: number;
+    rank: number;
+  }>;
+  top_5: Array<{
+    name: string;
+    importance: number;
+  }>;
+}
+
+export interface ExoplanetEducation {
+  overview: string;
+  detection_methods: Record<string, any>;
+  planet_types: Record<string, any>;
+  features_explained: Record<string, string>;
+  missions: Record<string, any>;
+}
+
+export interface DatasetComparison {
+  missions: Array<{
+    name: string;
+    total_observations: number;
+    confirmed_exoplanets: number;
+    false_positives: number;
+    candidates: number;
+    confirmation_rate: number;
+  }>;
+  summary: {
+    total_observations: number;
+    total_confirmed: number;
+    total_false_positives: number;
+  };
+}
+
+export interface HyperparameterTuningRequest {
+  algorithm: string;
+  param_grid: Record<string, any[]>;
+  cv_folds?: number;
+}
+
+export interface HyperparameterTuningResult {
+  best_params: Record<string, any>;
+  best_score: number;
+  cv_results: {
+    mean_scores: number[];
+    std_scores: number[];
+  };
+}
+
+export interface RetrainingRequest {
+  algorithm: string;
+  dataset?: string;
+  hyperparameters?: Record<string, any>;
+}
+
+export interface RetrainingResult {
+  message: string;
+  model_id: string;
+  algorithm: string;
+  dataset: string;
+  performance: Record<string, any>;
+}

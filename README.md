@@ -16,6 +16,9 @@ AI-powered system for identifying and classifying exoplanets using machine learn
 - 📈 **Interactive Dashboard** - Visualize model performance metrics
 - 🌐 **Modern Web Interface** - Beautiful Next.js frontend
 - 🚀 **REST API** - FastAPI backend for easy integration
+- ⚙️ **Advanced Features** - Hyperparameter tuning, model retraining, feature importance
+- 📚 **Educational Content** - Learn about exoplanets and detection methods
+- 🔬 **Dataset Comparison** - Compare discoveries across NASA missions
 
 ## 🚀 Quick Start
 
@@ -97,6 +100,7 @@ NASA-Space-App/
 - **[Setup Guide](SETUP.md)** - Detailed installation instructions
 - **[API Documentation](docs/API_QUICKSTART.md)** - API usage guide
 - **[Frontend Guide](docs/FRONTEND_SETUP_GUIDE.md)** - Frontend setup
+- **[Advanced Features](docs/ADVANCED_FEATURES.md)** - Hyperparameter tuning, retraining, and more
 - **[Full Documentation](docs/)** - Complete documentation index
 
 ## 🎯 Usage

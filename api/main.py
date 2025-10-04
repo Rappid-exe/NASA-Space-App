@@ -256,6 +256,347 @@ async def load_model(model_id: str):
                           detail=f"Failed to load model: {str(e)}")
 
 
+@app.get("/model/feature-importance")
+async def get_feature_importance():
+    """
+    Get feature importance scores for the current model.
+    
+    Returns:
+        Dictionary with feature names and importance scores
+    """
+    try:
+        importance = inference_service.get_feature_importance()
+        return importance
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                          detail=f"Failed to get feature importance: {str(e)}")
+
+
+@app.get("/education/exoplanet-info")
+async def get_exoplanet_education():
+    """
+    Get educational information about exoplanets and their characteristics.
+    
+    Returns:
+        Educational content about exoplanets
+    """
+    return {
+        "overview": "Exoplanets are planets that orbit stars outside our solar system. They are detected using various methods, with the transit method being one of the most successful.",
+        "detection_methods": {
+            "transit": {
+                "name": "Transit Method",
+                "description": "Detects planets by measuring the dimming of a star's light as a planet passes in front of it",
+                "key_features": ["orbital_period", "transit_duration", "transit_depth"]
+            }
+        },
+        "planet_types": {
+            "earth_like": {
+                "name": "Earth-like",
+                "radius_range": "< 1.5 Earth radii",
+                "description": "Rocky planets similar in size to Earth",
+                "habitability": "Potentially habitable if in the right zone"
+            },
+            "super_earth": {
+                "name": "Super-Earth",
+                "radius_range": "1.5 - 2.5 Earth radii",
+                "description": "Larger rocky planets, more massive than Earth",
+                "habitability": "May be habitable depending on atmosphere"
+            },
+            "neptune_like": {
+                "name": "Neptune-like",
+                "radius_range": "2.5 - 6 Earth radii",
+                "description": "Gas planets similar to Neptune",
+                "habitability": "Unlikely to be habitable"
+            },
+            "jupiter_like": {
+                "name": "Jupiter-like",
+                "radius_range": "> 6 Earth radii",
+                "description": "Large gas giants",
+                "habitability": "Not habitable"
+            }
+        },
+        "features_explained": {
+            "orbital_period": "Time it takes for the planet to complete one orbit around its star (in days)",
+            "transit_duration": "How long the planet takes to cross in front of its star (in hours)",
+            "transit_depth": "How much the star's brightness decreases during transit (in parts per million)",
+            "planetary_radius": "Size of the planet compared to Earth",
+            "equilibrium_temperature": "Estimated temperature of the planet based on stellar radiation (in Kelvin)"
+        },
+        "missions": {
+            "kepler": {
+                "name": "Kepler Space Telescope",
+                "years": "2009-2018",
+                "discoveries": "Over 2,600 confirmed exoplanets",
+                "focus": "Continuous monitoring of 150,000 stars"
+            },
+            "tess": {
+                "name": "Transiting Exoplanet Survey Satellite (TESS)",
+                "years": "2018-present",
+                "discoveries": "Over 5,000 candidate exoplanets",
+                "focus": "All-sky survey of nearby bright stars"
+            },
+            "k2": {
+                "name": "K2 Mission",
+                "years": "2014-2018",
+                "discoveries": "Over 500 confirmed exoplanets",
+                "focus": "Extended Kepler mission with different fields"
+            }
+        }
+    }
+
+
+@app.get("/datasets/comparison")
+async def get_dataset_comparison():
+    """
+    Get comparison statistics between different NASA mission datasets.
+    
+    Returns:
+        Comparison data for Kepler, TESS, and K2 missions
+    """
+    try:
+        # Import data loader
+        from data.dataset_loader import DatasetLoader
+        from pathlib import Path
+        
+        loader = DatasetLoader()
+        data_dir = Path(__file__).parent.parent / 'data' / 'raw'
+        
+        comparison = {
+            "missions": [],
+            "summary": {
+                "total_observations": 0,
+                "total_confirmed": 0,
+                "total_false_positives": 0
+            }
+        }
+        
+        # Try to load each dataset
+        datasets = [
+            ("Kepler", "cumulative.csv", "koi_disposition"),
+            ("K2", "k2targets.csv", "k2_disposition"),
+            ("TESS", "toi.csv", "tfopwg_disp")
+        ]
+        
+        for mission_name, filename, disp_col in datasets:
+            try:
+                filepath = data_dir / filename
+                if filepath.exists():
+                    df = loader.load_dataset(str(filepath))
+                    
+                    # Count dispositions
+                    confirmed = 0
+                    false_positive = 0
+                    candidate = 0
+                    
+                    if disp_col in df.columns:
+                        disp_counts = df[disp_col].value_counts()
+                        confirmed = disp_counts.get('CONFIRMED', 0) + disp_counts.get('CP', 0)
+                        false_positive = disp_counts.get('FALSE POSITIVE', 0) + disp_counts.get('FP', 0)
+                        candidate = disp_counts.get('CANDIDATE', 0) + disp_counts.get('PC', 0)
+                    
+                    mission_data = {
+                        "name": mission_name,
+                        "total_observations": len(df),
+                        "confirmed_exoplanets": int(confirmed),
+                        "false_positives": int(false_positive),
+                        "candidates": int(candidate),
+                        "confirmation_rate": float(confirmed / len(df) * 100) if len(df) > 0 else 0
+                    }
+                    
+                    comparison["missions"].append(mission_data)
+                    comparison["summary"]["total_observations"] += len(df)
+                    comparison["summary"]["total_confirmed"] += int(confirmed)
+                    comparison["summary"]["total_false_positives"] += int(false_positive)
+            except Exception as e:
+                print(f"Could not load {mission_name} dataset: {e}")
+        
+        return comparison
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                          detail=f"Failed to generate dataset comparison: {str(e)}")
+
+
+class HyperparameterTuningRequest(BaseModel):
+    """Request for hyperparameter tuning."""
+    algorithm: str = Field(..., description="Algorithm to tune (RandomForest, NeuralNetwork, SVM)")
+    param_grid: Dict[str, List[Any]] = Field(..., description="Parameter grid for tuning")
+    cv_folds: int = Field(default=5, description="Number of cross-validation folds", ge=2, le=10)
+
+
+@app.post("/model/tune-hyperparameters")
+async def tune_hyperparameters(request: HyperparameterTuningRequest):
+    """
+    Tune hyperparameters for a specific algorithm.
+    
+    Args:
+        request: Hyperparameter tuning configuration
+        
+    Returns:
+        Best parameters and performance metrics
+    """
+    try:
+        from models.model_trainer import ModelTrainer
+        from data.dataset_loader import DatasetLoader
+        from data.data_processor import DataProcessor
+        from pathlib import Path
+        from sklearn.model_selection import GridSearchCV
+        import numpy as np
+        
+        # Load and prepare data
+        loader = DatasetLoader()
+        processor = DataProcessor()
+        data_dir = Path(__file__).parent.parent / 'data' / 'raw'
+        
+        # Try to load Kepler data
+        kepler_path = data_dir / 'cumulative.csv'
+        if not kepler_path.exists():
+            raise ValueError("Training data not found")
+        
+        df = loader.load_dataset(str(kepler_path))
+        X, y, feature_names = processor.prepare_features(df, target_column='koi_disposition')
+        
+        # Create base model
+        if request.algorithm == 'RandomForest':
+            from models.random_forest_classifier import RandomForestClassifier
+            base_model = RandomForestClassifier()
+        elif request.algorithm == 'NeuralNetwork':
+            raise ValueError("Neural Network hyperparameter tuning not supported via this endpoint")
+        elif request.algorithm == 'SVM':
+            from models.svm_classifier import SVMClassifier
+            base_model = SVMClassifier()
+        else:
+            raise ValueError(f"Unknown algorithm: {request.algorithm}")
+        
+        # Perform grid search
+        grid_search = GridSearchCV(
+            base_model.model,
+            request.param_grid,
+            cv=request.cv_folds,
+            scoring='f1',
+            n_jobs=-1,
+            verbose=1
+        )
+        
+        grid_search.fit(X, y)
+        
+        return {
+            "best_params": grid_search.best_params_,
+            "best_score": float(grid_search.best_score_),
+            "cv_results": {
+                "mean_scores": grid_search.cv_results_['mean_test_score'].tolist()[:10],  # Top 10
+                "std_scores": grid_search.cv_results_['std_test_score'].tolist()[:10]
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                          detail=f"Hyperparameter tuning failed: {str(e)}")
+
+
+class RetrainingRequest(BaseModel):
+    """Request for model retraining."""
+    algorithm: str = Field(..., description="Algorithm to train")
+    dataset: str = Field(default="kepler", description="Dataset to use (kepler, k2, tess, combined)")
+    hyperparameters: Optional[Dict[str, Any]] = Field(None, description="Custom hyperparameters")
+
+
+@app.post("/model/retrain")
+async def retrain_model(request: RetrainingRequest):
+    """
+    Retrain a model with specified configuration.
+    
+    Args:
+        request: Retraining configuration
+        
+    Returns:
+        Training results and new model information
+    """
+    try:
+        from models.model_trainer import ModelTrainer
+        from models.model_registry import ModelRegistry
+        from data.dataset_loader import DatasetLoader
+        from data.data_processor import DataProcessor
+        from pathlib import Path
+        import numpy as np
+        
+        # Load data
+        loader = DatasetLoader()
+        processor = DataProcessor()
+        data_dir = Path(__file__).parent.parent / 'data' / 'raw'
+        
+        # Select dataset
+        if request.dataset == "kepler":
+            filepath = data_dir / 'cumulative.csv'
+            target_col = 'koi_disposition'
+        elif request.dataset == "k2":
+            filepath = data_dir / 'k2targets.csv'
+            target_col = 'k2_disposition'
+        elif request.dataset == "tess":
+            filepath = data_dir / 'toi.csv'
+            target_col = 'tfopwg_disp'
+        else:
+            raise ValueError(f"Unknown dataset: {request.dataset}")
+        
+        if not filepath.exists():
+            raise ValueError(f"Dataset not found: {filepath}")
+        
+        df = loader.load_dataset(str(filepath))
+        X, y, feature_names = processor.prepare_features(df, target_column=target_col)
+        
+        # Split data
+        from sklearn.model_selection import train_test_split
+        X_train, X_temp, y_train, y_temp = train_test_split(X, y, test_size=0.3, random_state=42, stratify=y)
+        X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.5, random_state=42, stratify=y_temp)
+        
+        # Configure model
+        model_config = request.hyperparameters or {}
+        if request.algorithm == 'RandomForest':
+            model_config.setdefault('n_estimators', 100)
+            model_config.setdefault('random_state', 42)
+        elif request.algorithm == 'NeuralNetwork':
+            model_config.setdefault('hidden_layers', (128, 64, 32))
+            model_config.setdefault('random_state', 42)
+        elif request.algorithm == 'SVM':
+            model_config.setdefault('kernel', 'rbf')
+            model_config.setdefault('random_state', 42)
+        
+        # Train model
+        trainer = ModelTrainer()
+        trainer.initialize_models({request.algorithm: model_config})
+        trainer.train_models(X_train, y_train, X_val, y_val, feature_names)
+        results = trainer.evaluate_models(X_test, y_test)
+        
+        # Register model
+        registry = ModelRegistry()
+        model = trainer.models[request.algorithm]
+        evaluator = trainer.evaluator
+        
+        model_name = f"{request.dataset}_{request.algorithm.lower()}"
+        model_id = registry.register_model(
+            model=model,
+            model_name=model_name,
+            algorithm=request.algorithm,
+            training_dataset=request.dataset,
+            feature_columns=feature_names,
+            evaluation_results=evaluator.evaluation_results[request.algorithm],
+            training_samples=len(X_train),
+            test_samples=len(X_test)
+        )
+        
+        # Load the new model
+        inference_service.load_model(model_id=model_id)
+        
+        return {
+            "message": "Model retrained successfully",
+            "model_id": model_id,
+            "algorithm": request.algorithm,
+            "dataset": request.dataset,
+            "performance": results[request.algorithm]
+        }
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                          detail=f"Model retraining failed: {str(e)}")
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -88,6 +88,12 @@ export default function Home() {
             >
               📊 Upload Dataset
             </Link>
+            <Link 
+              href="/advanced"
+              className="px-8 py-4 bg-gray-800 text-white rounded-lg font-semibold hover:bg-gray-700 transition-all border border-gray-700 hover:border-gray-600"
+            >
+              ⚙️ Advanced Features
+            </Link>
           </div>
 
           {/* Stats */}

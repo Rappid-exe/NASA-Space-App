@@ -9,6 +9,13 @@ import type {
   ModelStatistics,
   HealthResponse,
   ModelInfo,
+  FeatureImportance,
+  ExoplanetEducation,
+  DatasetComparison,
+  HyperparameterTuningRequest,
+  HyperparameterTuningResult,
+  RetrainingRequest,
+  RetrainingResult,
 } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -61,6 +68,43 @@ export async function listModels(): Promise<ModelInfo[]> {
 // Load Specific Model
 export async function loadModel(modelId: string): Promise<{ message: string; model_id: string; algorithm: string }> {
   const response = await apiClient.post(`/model/load/${modelId}`);
+  return response.data;
+}
+
+// Feature Importance
+export async function getFeatureImportance(): Promise<FeatureImportance> {
+  const response = await apiClient.get<FeatureImportance>('/model/feature-importance');
+  return response.data;
+}
+
+// Educational Content
+export async function getExoplanetEducation(): Promise<ExoplanetEducation> {
+  const response = await apiClient.get<ExoplanetEducation>('/education/exoplanet-info');
+  return response.data;
+}
+
+// Dataset Comparison
+export async function getDatasetComparison(): Promise<DatasetComparison> {
+  const response = await apiClient.get<DatasetComparison>('/datasets/comparison');
+  return response.data;
+}
+
+// Hyperparameter Tuning
+export async function tuneHyperparameters(
+  request: HyperparameterTuningRequest
+): Promise<HyperparameterTuningResult> {
+  const response = await apiClient.post<HyperparameterTuningResult>(
+    '/model/tune-hyperparameters',
+    request
+  );
+  return response.data;
+}
+
+// Model Retraining
+export async function retrainModel(
+  request: RetrainingRequest
+): Promise<RetrainingResult> {
+  const response = await apiClient.post<RetrainingResult>('/model/retrain', request);
   return response.data;
 }
 

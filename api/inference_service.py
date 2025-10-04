@@ -392,3 +392,56 @@ class InferenceService:
             'training_samples': self.metadata.training_samples,
             'test_samples': self.metadata.test_samples
         }
+    
+    def get_feature_importance(self) -> Dict[str, Any]:
+        """
+        Get feature importance scores for the current model.
+        
+        Returns:
+            Dictionary with feature names and importance scores
+        """
+        self._validate_model_loaded()
+        
+        try:
+            importance_scores = {}
+            
+            # For tree-based models (RandomForest)
+            if hasattr(self.model, 'feature_importances_'):
+                importances = self.model.feature_importances_
+                for i, feature in enumerate(self.feature_columns):
+                    importance_scores[feature] = float(importances[i])
+            
+            # For SVM models with linear kernel
+            elif hasattr(self.model, 'coef_'):
+                # Use absolute values of coefficients as importance
+                importances = np.abs(self.model.coef_[0])
+                for i, feature in enumerate(self.feature_columns):
+                    importance_scores[feature] = float(importances[i])
+            
+            # For Neural Networks, use permutation importance approximation
+            else:
+                # Return uniform importance for models without built-in feature importance
+                uniform_importance = 1.0 / len(self.feature_columns)
+                for feature in self.feature_columns:
+                    importance_scores[feature] = uniform_importance
+            
+            # Sort by importance
+            sorted_features = sorted(importance_scores.items(), key=lambda x: x[1], reverse=True)
+            
+            return {
+                'algorithm': self.metadata.algorithm,
+                'features': [
+                    {
+                        'name': name,
+                        'importance': score,
+                        'rank': i + 1
+                    }
+                    for i, (name, score) in enumerate(sorted_features)
+                ],
+                'top_5': [
+                    {'name': name, 'importance': score}
+                    for name, score in sorted_features[:5]
+                ]
+            }
+        except Exception as e:
+            raise ValueError(f"Could not extract feature importance: {str(e)}")

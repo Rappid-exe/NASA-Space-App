@@ -60,71 +60,71 @@ export default function ClassificationForm({ onResult, onLoadingChange }: Classi
     }
   };
 
-  const loadExample = (type: 'hot-jupiter' | 'earth-like' | 'false-positive') => {
+  const loadExample = (type: 'hot-jupiter' | 'super-earth' | 'false-positive') => {
     const examples = {
       'hot-jupiter': {
         orbital_period: 3.52,
         transit_duration: 2.8,
-        transit_depth: 500.0,
-        planetary_radius: 1.2,
-        equilibrium_temperature: 1200.0,
+        transit_depth: 15000.0,  // Deep transit for large planet
+        planetary_radius: 11.2,   // Jupiter-sized (11.2 Earth radii)
+        equilibrium_temperature: 1450.0,  // Very hot!
       },
-      'earth-like': {
-        orbital_period: 365.25,
-        transit_duration: 6.5,
-        transit_depth: 84.0,
-        planetary_radius: 1.0,
-        equilibrium_temperature: 288.0,
+      'super-earth': {
+        orbital_period: 10.5,     // Shorter period than Earth
+        transit_duration: 3.5,    // Moderate transit duration
+        transit_depth: 450.0,     // Detectable signal
+        planetary_radius: 2.5,    // Super-Earth size
+        equilibrium_temperature: 650.0,  // Warm but not extreme
       },
       'false-positive': {
-        orbital_period: 0.5,
-        transit_duration: 1.2,
-        transit_depth: 2000.0,
-        planetary_radius: 0.8,
-        equilibrium_temperature: 2500.0,
+        orbital_period: 0.5,      // Unrealistically short
+        transit_duration: 0.2,    // Too short
+        transit_depth: 25000.0,   // Suspiciously deep
+        planetary_radius: 0.3,    // Too small for such depth
+        equilibrium_temperature: 3500.0,  // Extremely hot
       },
     };
     setFormData(examples[type]);
   };
 
   return (
-    <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 border border-gray-700">
-      <h3 className="text-xl font-semibold text-white mb-6">Observation Data</h3>
+    <div className="glass-strong rounded-2xl p-8 border border-white/30 shadow-xl hover:shadow-2xl transition-all duration-normal">
+      <h3 className="font-display text-2xl font-semibold text-white mb-8 drop-shadow-lg">Observation Data</h3>
 
-      {/* Quick Load Examples */}
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-300 mb-2">
+      {/* Quick Load Examples with refined styling */}
+      <div className="mb-8">
+        <label className="block text-base font-semibold text-gray-200 mb-3">
           Quick Load Example:
         </label>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-3">
           <button
             type="button"
             onClick={() => loadExample('hot-jupiter')}
-            className="px-3 py-1 bg-orange-600 hover:bg-orange-700 text-white text-sm rounded transition-colors"
+            className="px-4 py-2.5 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white text-sm font-medium rounded-xl transition-all duration-fast transform hover:scale-105 hover:-translate-y-0.5 shadow-lg hover:shadow-glow-red"
           >
             🔥 Hot Jupiter
           </button>
           <button
             type="button"
-            onClick={() => loadExample('earth-like')}
-            className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-sm rounded transition-colors"
+            onClick={() => loadExample('super-earth')}
+            className="px-4 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white text-sm font-medium rounded-xl transition-all duration-fast transform hover:scale-105 hover:-translate-y-0.5 shadow-lg hover:shadow-glow-green"
           >
-            🌍 Earth-like
+            🌍 Super-Earth
           </button>
           <button
             type="button"
             onClick={() => loadExample('false-positive')}
-            className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-sm rounded transition-colors"
+            className="px-4 py-2.5 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white text-sm font-medium rounded-xl transition-all duration-fast transform hover:scale-105 hover:-translate-y-0.5 shadow-lg hover:shadow-glow-red"
           >
             ❌ False Positive
           </button>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-6">
         {/* Orbital Period */}
         <div>
-          <label htmlFor="orbital_period" className="block text-sm font-medium text-gray-300 mb-2">
+          <label htmlFor="orbital_period" className="block text-base font-semibold text-gray-200 mb-3">
             Orbital Period (days) *
           </label>
           <input
@@ -135,14 +135,14 @@ export default function ClassificationForm({ onResult, onLoadingChange }: Classi
             onChange={handleChange}
             step="0.01"
             required
-            className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-5 py-3.5 bg-gray-900/80 border border-gray-700 rounded-xl text-white text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-fast hover:border-gray-600"
             placeholder="e.g., 3.52"
           />
         </div>
 
         {/* Transit Duration */}
         <div>
-          <label htmlFor="transit_duration" className="block text-sm font-medium text-gray-300 mb-2">
+          <label htmlFor="transit_duration" className="block text-base font-semibold text-gray-200 mb-3">
             Transit Duration (hours) *
           </label>
           <input
@@ -153,14 +153,14 @@ export default function ClassificationForm({ onResult, onLoadingChange }: Classi
             onChange={handleChange}
             step="0.01"
             required
-            className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-5 py-3.5 bg-gray-900/80 border border-gray-700 rounded-xl text-white text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-fast hover:border-gray-600"
             placeholder="e.g., 2.8"
           />
         </div>
 
         {/* Transit Depth */}
         <div>
-          <label htmlFor="transit_depth" className="block text-sm font-medium text-gray-300 mb-2">
+          <label htmlFor="transit_depth" className="block text-base font-semibold text-gray-200 mb-3">
             Transit Depth (ppm) *
           </label>
           <input
@@ -171,14 +171,14 @@ export default function ClassificationForm({ onResult, onLoadingChange }: Classi
             onChange={handleChange}
             step="0.1"
             required
-            className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-5 py-3.5 bg-gray-900/80 border border-gray-700 rounded-xl text-white text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-fast hover:border-gray-600"
             placeholder="e.g., 500.0"
           />
         </div>
 
         {/* Planetary Radius */}
         <div>
-          <label htmlFor="planetary_radius" className="block text-sm font-medium text-gray-300 mb-2">
+          <label htmlFor="planetary_radius" className="block text-base font-semibold text-gray-200 mb-3">
             Planetary Radius (Earth radii) *
           </label>
           <input
@@ -189,16 +189,16 @@ export default function ClassificationForm({ onResult, onLoadingChange }: Classi
             onChange={handleChange}
             step="0.01"
             required
-            className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-5 py-3.5 bg-gray-900/80 border border-gray-700 rounded-xl text-white text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-fast hover:border-gray-600"
             placeholder="e.g., 1.2"
           />
         </div>
 
         {/* Equilibrium Temperature */}
         <div>
-          <label htmlFor="equilibrium_temperature" className="block text-sm font-medium text-gray-300 mb-2">
+          <label htmlFor="equilibrium_temperature" className="block text-base font-semibold text-gray-200 mb-3">
             Equilibrium Temperature (Kelvin)
-            <span className="text-gray-500 ml-2">(optional)</span>
+            <span className="text-gray-400 ml-2 font-normal">(optional)</span>
           </label>
           <input
             type="number"
@@ -207,22 +207,25 @@ export default function ClassificationForm({ onResult, onLoadingChange }: Classi
             value={formData.equilibrium_temperature || ''}
             onChange={handleChange}
             step="0.1"
-            className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-5 py-3.5 bg-gray-900/80 border border-gray-700 rounded-xl text-white text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-fast hover:border-gray-600"
             placeholder="e.g., 1200.0"
           />
         </div>
 
-        {/* Error Message */}
+        {/* Error Message with refined styling */}
         {error && (
-          <div className="bg-red-900/20 border border-red-700 rounded-lg p-4">
-            <p className="text-red-400 text-sm">❌ {error}</p>
+          <div className="bg-red-900/30 border border-red-600 rounded-xl p-5 animate-fadeInScale">
+            <p className="text-red-300 text-base font-medium flex items-center gap-2">
+              <span className="text-xl">❌</span>
+              <span>{error}</span>
+            </p>
           </div>
         )}
 
-        {/* Submit Button */}
+        {/* Submit Button with refined styling */}
         <button
           type="submit"
-          className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105 shadow-lg hover:shadow-blue-500/50"
+          className="w-full px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-lg font-bold rounded-2xl hover:from-blue-700 hover:to-purple-700 transition-all duration-normal transform hover:scale-105 hover:-translate-y-1 shadow-2xl hover:shadow-glow-blue border border-white/20 hover:border-white/40 mt-8"
         >
           🚀 Classify Observation
         </button>

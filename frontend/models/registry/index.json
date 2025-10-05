@@ -1,0 +1,28 @@
+{
+  "models": {
+    "test_integration_model": [
+      {
+        "model_id": "test_integration_model_v1_20251005_185116",
+        "version": 1,
+        "algorithm": "RandomForest",
+        "f1_score": 1.0,
+        "accuracy": 1.0,
+        "training_date": "2025-10-05T18:51:16.614501"
+      }
+    ],
+    "pipeline_test_model": [
+      {
+        "model_id": "pipeline_test_model_v1_20251005_185122",
+        "version": 1,
+        "algorithm": "RandomForest",
+        "f1_score": 1.0,
+        "accuracy": 1.0,
+        "training_date": "2025-10-05T18:51:22.154530"
+      }
+    ]
+  },
+  "latest_versions": {
+    "test_integration_model": 1,
+    "pipeline_test_model": 1
+  }
+}

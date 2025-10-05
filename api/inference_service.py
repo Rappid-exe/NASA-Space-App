@@ -44,7 +44,104 @@ class InferenceService:
     def _load_best_model(self) -> None:
         """Load the best performing model from the registry."""
         try:
-            # Try to load raw models first (no normalization - easiest for inference)
+            # Try to load models compatible with our 11-feature input (5 user + 6 engineered)
+            # RandomForest_Optimized is BEST for our use case!
+            best_models = [
+                'RandomForest_Optimized',  # 89.19% accuracy - PERFECT for our 11 features!
+                'RandomForest_UserFeatures',  # 88.43% accuracy - 5 features only
+            ]
+            
+            for model_name in best_models:
+                try:
+                    self.model, self.metadata = self.registry.load_model(model_name=model_name)
+                    self.feature_columns = self.metadata.feature_columns
+                    print(f"✅ Loaded BEST model for app: {self.metadata.model_id}")
+                    print(f"  Algorithm: {self.metadata.algorithm}")
+                    print(f"  Accuracy: {self.metadata.accuracy:.4f} ({self.metadata.accuracy*100:.2f}%)")
+                    print(f"  F1 Score: {self.metadata.f1_score:.4f}")
+                    print(f"  Features: {len(self.feature_columns)} (matches our feature engineering)")
+                    return
+                except Exception as e:
+                    print(f"  Could not load {model_name}: {e}")
+                    continue
+            
+            # Fallback to other models (may have feature mismatch)
+            fallback_models = [
+                'RandomForest_Retrained',  # 90.43% accuracy but needs 14 features
+                'RandomForest_Improved',   # 90.13% accuracy but needs 14 features
+                'exoplanet_classifier',    # 96.92% accuracy but needs 20 features
+            ]
+            
+            for model_name in fallback_models:
+                try:
+                    self.model, self.metadata = self.registry.load_model(model_name=model_name)
+                    self.feature_columns = self.metadata.feature_columns
+                    print(f"⚠️  Loaded fallback model: {self.metadata.model_id}")
+                    print(f"  Algorithm: {self.metadata.algorithm}")
+                    print(f"  Accuracy: {self.metadata.accuracy:.4f} ({self.metadata.accuracy*100:.2f}%)")
+                    print(f"  WARNING: May have feature mismatch ({len(self.feature_columns)} features expected)")
+                    return
+                except Exception as e:
+                    print(f"  Could not load {model_name}: {e}")
+                    continue
+            
+            # Last resort - try optimized models
+            optimized_models = [
+                'RandomForest_Optimized',  # 89.19% accuracy
+            ]
+            
+            for model_name in optimized_models:
+                try:
+                    self.model, self.metadata = self.registry.load_model(model_name=model_name)
+                    self.feature_columns = self.metadata.feature_columns
+                    print(f"✅ Loaded OPTIMIZED model: {self.metadata.model_id}")
+                    print(f"  Algorithm: {self.metadata.algorithm}")
+                    print(f"  Accuracy: {self.metadata.accuracy:.4f} ({self.metadata.accuracy*100:.2f}%)")
+                    print(f"  F1 Score: {self.metadata.f1_score:.4f}")
+                    print(f"  Features: {len(self.feature_columns)} (with engineering)")
+                    return
+                except:
+                    continue
+            
+            # Fallback: Try to load user-features-only models
+            user_feature_models = [
+                'RandomForest_UserFeatures',  # 88.43% accuracy
+                'SVM_UserFeatures',           # 69.40% accuracy
+                'NeuralNetwork_UserFeatures'  # 50.47% accuracy
+            ]
+            
+            for model_name in user_feature_models:
+                try:
+                    self.model, self.metadata = self.registry.load_model(model_name=model_name)
+                    self.feature_columns = self.metadata.feature_columns
+                    print(f"✅ Loaded USER-OPTIMIZED model: {self.metadata.model_id}")
+                    print(f"  Algorithm: {self.metadata.algorithm}")
+                    print(f"  Accuracy: {self.metadata.accuracy:.4f} ({self.metadata.accuracy*100:.2f}%)")
+                    print(f"  F1 Score: {self.metadata.f1_score:.4f}")
+                    return
+                except:
+                    continue
+            
+            # Fallback: Try to load retrained models (90.43% accuracy but needs all features!)
+            retrained_models = [
+                'RandomForest_Retrained',  # 90.43% accuracy - BEST!
+                'SVM_Retrained',           # 64.17% accuracy
+                'NeuralNetwork_Retrained'  # 50.47% accuracy
+            ]
+            
+            for model_name in retrained_models:
+                try:
+                    self.model, self.metadata = self.registry.load_model(model_name=model_name)
+                    self.feature_columns = self.metadata.feature_columns
+                    print(f"✅ Loaded RETRAINED model (multi-mission): {self.metadata.model_id}")
+                    print(f"  Algorithm: {self.metadata.algorithm}")
+                    print(f"  Accuracy: {self.metadata.accuracy:.4f} ({self.metadata.accuracy*100:.2f}%)")
+                    print(f"  F1 Score: {self.metadata.f1_score:.4f}")
+                    return
+                except:
+                    continue
+            
+            # Fallback: Try to load raw models (no normalization - easiest for inference)
             raw_models = [
                 'raw_randomforest',
                 'raw_neuralnetwork',
@@ -55,10 +152,9 @@ class InferenceService:
                 try:
                     self.model, self.metadata = self.registry.load_model(model_name=model_name)
                     self.feature_columns = self.metadata.feature_columns
-                    print(f"✅ Loaded RAW model (no normalization): {self.metadata.model_id}")
+                    print(f"⚠️  Loaded RAW model (fallback): {self.metadata.model_id}")
                     print(f"  Algorithm: {self.metadata.algorithm}")
                     print(f"  F1 Score: {self.metadata.f1_score:.4f}")
-                    print(f"  Training Dataset: {self.metadata.training_dataset}")
                     return
                 except:
                     continue
@@ -132,7 +228,7 @@ class InferenceService:
     
     def _prepare_features(self, features: Dict[str, Any]) -> pd.DataFrame:
         """
-        Prepare input features for prediction.
+        Prepare input features for prediction with feature engineering.
         
         Args:
             features: Dictionary of feature values
@@ -142,11 +238,11 @@ class InferenceService:
         """
         # Map frontend feature names to model feature names
         feature_mapping = {
-            'orbital_period': 'koi_period',
-            'transit_duration': 'koi_duration',
-            'transit_depth': 'koi_depth',
-            'planetary_radius': 'koi_prad',
-            'equilibrium_temperature': 'koi_teq'
+            'orbital_period': 'period',
+            'transit_duration': 'duration',
+            'transit_depth': 'depth',
+            'planetary_radius': 'radius',
+            'equilibrium_temperature': 'temperature'
         }
         
         # Rename features to match training data
@@ -155,100 +251,84 @@ class InferenceService:
             if frontend_name in features and features[frontend_name] is not None:
                 mapped_features[model_name] = features[frontend_name]
         
-        # Create derived features using mapped names
-        derived_features = self._create_derived_features(mapped_features)
-        
-        # Combine original and derived features
-        all_features = {**mapped_features, **derived_features}
+        # Engineer features (same as training)
+        if all(k in mapped_features for k in ['depth', 'radius', 'period', 'duration', 'temperature']):
+            # Depth-to-Radius ratio
+            mapped_features['depth_radius_ratio'] = mapped_features['depth'] / (mapped_features['radius'] ** 2 + 1)
+            
+            # Period-to-Duration ratio
+            mapped_features['period_duration_ratio'] = mapped_features['period'] / (mapped_features['duration'] + 0.1)
+            
+            # Log-scaled depth
+            mapped_features['log_depth'] = np.log10(mapped_features['depth'] + 1)
+            
+            # Temperature zone (0=cold, 1=habitable, 2=warm, 3=hot)
+            temp = mapped_features['temperature']
+            if temp <= 200:
+                mapped_features['temp_zone'] = 0.0
+            elif temp <= 350:
+                mapped_features['temp_zone'] = 1.0
+            elif temp <= 1000:
+                mapped_features['temp_zone'] = 2.0
+            else:
+                mapped_features['temp_zone'] = 3.0
+            
+            # Size category (0=Earth-like, 1=Super-Earth, 2=Neptune-like, 3=Jupiter-like)
+            radius = mapped_features['radius']
+            if radius <= 1.5:
+                mapped_features['size_category'] = 0.0
+            elif radius <= 2.5:
+                mapped_features['size_category'] = 1.0
+            elif radius <= 6:
+                mapped_features['size_category'] = 2.0
+            else:
+                mapped_features['size_category'] = 3.0
+            
+            # Period category (0=ultra-short, 1=short, 2=medium, 3=long)
+            period = mapped_features['period']
+            if period <= 10:
+                mapped_features['period_category'] = 0.0
+            elif period <= 100:
+                mapped_features['period_category'] = 1.0
+            elif period <= 1000:
+                mapped_features['period_category'] = 2.0
+            else:
+                mapped_features['period_category'] = 3.0
         
         # Create DataFrame with all expected features in correct order
         feature_dict = {}
         for col in self.feature_columns:
-            if col in all_features:
-                feature_dict[col] = [all_features[col]]
+            if col in mapped_features:
+                feature_dict[col] = [mapped_features[col]]
             else:
                 # Use default value for missing features
                 feature_dict[col] = [0.0]
         
         return pd.DataFrame(feature_dict)
-    
-    def _create_derived_features(self, features: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Create derived features from input features.
-        
-        Args:
-            features: Dictionary of input features (with koi_ prefix)
-            
-        Returns:
-            Dictionary of derived features
-        """
-        derived = {}
-        
-        # Period-Duration Ratio
-        if 'koi_period' in features and 'koi_duration' in features:
-            derived['period_duration_ratio'] = (
-                features['koi_period'] / (features['koi_duration'] / 24.0)
-            )
-        
-        # Depth-Radius Correlation
-        if 'koi_depth' in features and 'koi_prad' in features:
-            derived['depth_radius_correlation'] = (
-                features['koi_depth'] / (features['koi_prad'] ** 2)
-            )
-        
-        # Temperature-based features
-        if 'koi_teq' in features and features['koi_teq'] is not None:
-            temp = features['koi_teq']
-            derived['temp_habitable_zone'] = 1 if 200 <= temp <= 350 else 0
-        else:
-            derived['temp_habitable_zone'] = 0
-        
-        # Period categories (encoded as numeric)
-        if 'koi_period' in features:
-            period = features['koi_period']
-            if period <= 10:
-                derived['period_category'] = 0  # ultra_short
-            elif period <= 100:
-                derived['period_category'] = 1  # short
-            elif period <= 1000:
-                derived['period_category'] = 2  # medium
-            else:
-                derived['period_category'] = 3  # long
-        
-        # Radius categories (encoded as numeric)
-        if 'koi_prad' in features:
-            radius = features['koi_prad']
-            if radius <= 1.5:
-                derived['radius_category'] = 0  # earth_like
-            elif radius <= 2.5:
-                derived['radius_category'] = 1  # super_earth
-            elif radius <= 6:
-                derived['radius_category'] = 2  # neptune_like
-            else:
-                derived['radius_category'] = 3  # jupiter_like
-        
-        # Transit SNR
-        if 'koi_depth' in features:
-            derived['transit_snr'] = np.log10(features['koi_depth'] + 1)
-        
-        return derived
-    
+
     def _get_probabilities(self, X):
         """
         Get prediction probabilities, handling both sklearn and Keras models.
         
         Args:
-            X: Input features
+            X: Input features (DataFrame or array)
             
         Returns:
             Array of probabilities
         """
+        # Keep as DataFrame for sklearn models (they need feature names)
+        # Only convert to array for Keras models
         if hasattr(self.model, 'predict_proba'):
-            # scikit-learn models (RandomForest, SVM)
+            # scikit-learn models (RandomForest, SVM) - keep DataFrame
             return self.model.predict_proba(X)
         else:
-            # Keras/TensorFlow models (Neural Network)
-            probs = self.model.predict(X, verbose=0)
+            # Keras/TensorFlow models (Neural Network) - convert to array
+            if isinstance(X, pd.DataFrame):
+                X_array = X.values
+            else:
+                X_array = X
+            
+            probs = self.model.predict(X_array, verbose=0)
             # Ensure it's 2D with probabilities for both classes
             if probs.shape[1] == 1:
                 # Binary classification with single output

@@ -131,35 +131,37 @@ export default function Dashboard() {
           </ResponsiveContainer>
         </div>
 
-        {/* Pie Chart */}
+        {/* Model Performance Summary */}
         <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 border border-gray-700">
-          <h4 className="text-lg font-semibold text-white mb-4">Metrics Distribution</h4>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={metricsData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ name, value }) => `${name}: ${value.toFixed(1)}%`}
-                outerRadius={80}
-                fill="#8884d8"
-                dataKey="value"
-              >
-                {metricsData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: '#1f2937',
-                  border: '1px solid #374151',
-                  borderRadius: '8px',
-                  color: '#fff',
-                }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
+          <h4 className="text-lg font-semibold text-white mb-4">Performance Summary</h4>
+          <div className="space-y-4">
+            {metricsData.map((metric, index) => (
+              <div key={metric.name}>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-gray-300 font-medium">{metric.name}</span>
+                  <span className="text-white font-bold">{metric.value.toFixed(2)}%</span>
+                </div>
+                <div className="w-full bg-gray-700 rounded-full h-3 overflow-hidden">
+                  <div
+                    className="h-3 rounded-full transition-all duration-500"
+                    style={{
+                      width: `${metric.value}%`,
+                      backgroundColor: COLORS[index],
+                    }}
+                  ></div>
+                </div>
+              </div>
+            ))}
+            <div className="mt-6 pt-4 border-t border-gray-700">
+              <div className="text-center">
+                <div className="text-sm text-gray-400 mb-1">Overall Performance</div>
+                <div className="text-3xl font-bold text-green-400">
+                  {((stats.accuracy + stats.precision + stats.recall + stats.f1_score) / 4 * 100).toFixed(1)}%
+                </div>
+                <div className="text-xs text-gray-500 mt-1">Average of all metrics</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
